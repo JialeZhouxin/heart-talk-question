@@ -254,12 +254,6 @@ const UI_TIMING = {
 };
 
 const THEME_KEY = 'heartTalkTheme';
-const THEME_CHOICES = ['forest', 'warm', 'dark'];
-const THEME_LABELS = {
-    forest: '\u6d45\u7eff\u68ee\u6797',
-    warm: '\u6696\u7eb8\u6cbb\u6108',
-    dark: '\u591c\u95f4\u62a4\u773c'
-};
 
 const elements = {
     cardContainer: document.getElementById('cardContainer'),
@@ -290,7 +284,7 @@ const elements = {
     confirmMessage: document.getElementById('confirmMessage'),
     confirmOkBtn: document.getElementById('confirmOkBtn'),
     confirmCancelBtn: document.getElementById('confirmCancelBtn'),
-    themeSelector: document.getElementById('themeSelector')
+    themeToggleBtn: document.getElementById('themeToggleBtn')
 };
 
 function buildNamesMap(selector, dataKey) {
@@ -332,24 +326,22 @@ function refreshHistoryView() {
 
 function getStoredTheme() {
     const value = localStorage.getItem(THEME_KEY);
-    return THEME_CHOICES.includes(value) ? value : 'forest';
+    return value === 'dark' ? 'dark' : 'light';
 }
 
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    if (!elements.themeSelector) return;
-    elements.themeSelector.querySelectorAll('[data-theme-choice]').forEach((button) => {
-        const active = button.dataset.themeChoice === theme;
-        button.classList.toggle('active', active);
-        button.setAttribute('aria-pressed', String(active));
-    });
+    const isDark = theme === 'dark';
+    elements.themeToggleBtn.textContent = isDark ? '暖色模式' : '夜间护眼';
+    elements.themeToggleBtn.setAttribute('aria-pressed', String(isDark));
 }
 
-function setTheme(theme) {
-    if (!THEME_CHOICES.includes(theme)) return;
-    localStorage.setItem(THEME_KEY, theme);
-    applyTheme(theme);
-    showToast(`\u5df2\u5207\u6362\u5230${THEME_LABELS[theme]}\u98ce\u683c\u3002`, 'success');
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+    showToast(next === 'dark' ? '已切换到夜间护眼模式。' : '已切换到暖色模式。', 'success');
 }
 
 function showToast(message, type = 'info') {
@@ -549,11 +541,7 @@ function setupEventListeners() {
     elements.closeShareBtn.addEventListener('click', closeShareModal);
     elements.copyShareBtn.addEventListener('click', copyShareLink);
     elements.clearHistoryBtn.addEventListener('click', clearHistory);
-    elements.themeSelector.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-theme-choice]');
-        if (!button) return;
-        setTheme(button.dataset.themeChoice);
-    });
+    elements.themeToggleBtn.addEventListener('click', toggleTheme);
 
     elements.categoryFilters.addEventListener('click', (event) => {
         setActiveFilterButton(elements.categoryFilters, event.target);
@@ -586,3 +574,4 @@ function init() {
 }
 
 init();
+
