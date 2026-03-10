@@ -18,6 +18,7 @@ No bundler or framework is required.
 - `start index.html` (Windows): open directly for quick checks (`file://`).
 - `python -m http.server 5173`: run local static server (`http://localhost:5173`).
 - `node scripts/check-ui-chinese.js`: fail if UI-facing strings contain unintended English words.
+- `node scripts/sync-bundle-from-cards.js`: sync `src/app.bundle.js` cards block from `src/data/cards.js`.
 
 Run the Chinese UI check before every PR.
 
