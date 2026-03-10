@@ -48,3 +48,15 @@ PRs should include:
 ## Security & Configuration Tips
 - Do not commit secrets; this project should run fully client-side.
 - `localStorage` is used for history; avoid storing sensitive personal data.
+
+## Chinese Text Replacement (No-Mojibake Workflow)
+When replacing Chinese card text (especially in `src/data/cards.js`), do not pass Chinese literals directly in inline terminal script parameters.
+
+Use this stable 3-step workflow:
+1. Write updates to a UTF-8 file first (e.g., `tmp_updates_31_60.json`) with `id` + new `question`.
+2. In Node, read the file via `fs.readFileSync(..., 'utf8')`, strip BOM with `.replace(/^\uFEFF/, '')`, parse JSON, then replace by `id`.
+3. Verify immediately after write:
+   - Parse `cards.js` and check target IDs.
+   - Ensure no full-question corruption: `^\\?+$` count must be `0`.
+
+Reason: this avoids Chinese encoding loss in PowerShell/terminal argument passing, which can silently convert text into `?`.
