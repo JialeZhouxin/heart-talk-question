@@ -53,6 +53,7 @@
                 <div class="card-category" id="cardCategory"></div>
                 <div class="card-level" id="cardLevel"></div>
                 <div class="card-question" id="cardQuestion"></div>
+                <div class="card-voice-controls" id="cardVoiceControls"></div>
             </div>
         </div>
 
@@ -99,7 +100,10 @@
         <div class="modal-content">
             <h3>你的回答</h3>
             <p id="saveModalQuestion" style="margin-bottom: 15px; color: #6b7280;"></p>
-            <textarea id="answerInput" placeholder="写下你的思考和感受..."></textarea>
+            <div class="textarea-with-voice">
+                <textarea id="answerInput" placeholder="写下你的思考和感受..."></textarea>
+                <div class="voice-input-wrapper" id="saveVoiceWrapper"></div>
+            </div>
             <button class="btn" id="confirmSaveBtn">保存</button>
             <button class="btn btn-secondary" id="cancelSaveBtn">取消</button>
         </div>
@@ -133,7 +137,10 @@
         <div class="modal-content">
             <h3>编辑回答</h3>
             <p id="editModalQuestion" style="margin-bottom: 15px; color: #6b7280; font-weight: 500;"></p>
-            <textarea id="editAnswerInput" placeholder="编辑你的回答..."></textarea>
+            <div class="textarea-with-voice">
+                <textarea id="editAnswerInput" placeholder="编辑你的回答..."></textarea>
+                <div class="voice-input-wrapper" id="editVoiceWrapper"></div>
+            </div>
             <button class="btn" id="confirmEditBtn">保存修改</button>
             <button class="btn btn-secondary" id="cancelEditBtn">取消</button>
         </div>

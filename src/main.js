@@ -22,6 +22,18 @@ import {
 import { renderCustomCardManager, renderCustomCardForm } from './ui/custom-card-render.js';
 import { renderCardPackManager, renderCardPackPreview, renderActivePackIndicator } from './ui/card-pack-render.js';
 import { renderDailyCardSection, renderDailyCalendar } from './ui/daily-card-render.js';
+import {
+    createSpeechSynthesizer,
+    createSpeechRecognizer,
+    isSpeechRecognitionSupported,
+    requestMicrophonePermission
+} from './core/voice-service.js';
+import {
+    renderCardVoiceControls,
+    renderModalVoiceControls,
+    updateVoiceButtonState,
+    updateVoiceStatusIndicator
+} from './ui/voice-render.js';
 
 const state = {
     currentCard: null,
@@ -35,7 +47,14 @@ const state = {
     editingItem: null,
     customCards: loadCustomCards(),
     cardPacks: getAllCardPacks(),
-    todayCard: null
+    todayCard: null,
+    voice: {
+        isReading: false,
+        isListening: false,
+        synthesizer: null,
+        recognizer: null,
+        currentUtterance: null
+    }
 };
 
 const UI_TIMING = {
@@ -116,7 +135,11 @@ const elements = {
     closeCardPackBtn: document.getElementById('closeCardPackBtn'),
     // 每日推荐元素
     dailyCardSection: document.getElementById('dailyCardSection'),
-    dailyCardContainer: document.getElementById('dailyCardContainer')
+    dailyCardContainer: document.getElementById('dailyCardContainer'),
+    // 语音功能元素
+    cardVoiceControls: document.getElementById('cardVoiceControls'),
+    saveVoiceWrapper: document.getElementById('saveVoiceWrapper'),
+    editVoiceWrapper: document.getElementById('editVoiceWrapper')
 };
 
 // 当前生成的图片数据
@@ -149,6 +172,9 @@ function refreshCardView() {
         levelNames,
         elements
     });
+
+    // 渲染语音控制按钮
+    renderCardVoiceSection();
 }
 
 function getFilteredHistory() {
@@ -178,9 +204,14 @@ function openEditModal(item) {
     elements.editAnswerInput.value = item.answer;
     elements.editModal.classList.add('active');
     elements.editAnswerInput.focus();
+
+    // 渲染语音输入按钮
+    renderEditModalVoiceControls();
 }
 
 function closeEditModal() {
+    // 停止语音输入
+    stopVoiceInput();
     elements.editModal.classList.remove('active');
     state.editingItem = null;
 }
@@ -385,9 +416,14 @@ function openSaveModal() {
     elements.answerInput.value = '';
     elements.saveModal.classList.add('active');
     elements.answerInput.focus();
+
+    // 渲染语音输入按钮
+    renderSaveModalVoiceControls();
 }
 
 function closeSaveModal() {
+    // 停止语音输入
+    stopVoiceInput();
     elements.saveModal.classList.remove('active');
 }
 
@@ -1086,6 +1122,218 @@ function refreshDailyCardView() {
     initDailyCard();
 }
 
+// ==================== 语音功能 ====================
+
+/**
+ * 初始化语音服务
+ */
+function initVoiceService() {
+    state.voice.synthesizer = createSpeechSynthesizer();
+}
+
+/**
+ * 处理朗读按钮点击
+ */
+function handleReadAloud() {
+    if (!state.voice.synthesizer) {
+        showToast('您的浏览器不支持语音朗读功能', 'error');
+        return;
+    }
+
+    if (!state.currentCard) {
+        showToast('请先抽取一张卡牌', 'error');
+        return;
+    }
+
+    // 如果正在朗读，则停止
+    if (state.voice.isReading) {
+        state.voice.synthesizer.cancel();
+        state.voice.isReading = false;
+        renderCardVoiceControls({
+            container: elements.cardVoiceControls,
+            onReadAloud: handleReadAloud,
+            isReading: false,
+            disabled: false
+        });
+        return;
+    }
+
+    // 开始朗读
+    state.voice.isReading = true;
+    renderCardVoiceControls({
+        container: elements.cardVoiceControls,
+        onReadAloud: handleReadAloud,
+        isReading: true,
+        disabled: false
+    });
+
+    state.voice.synthesizer.speak(state.currentCard.question, {
+        rate: 0.9,
+        pitch: 1.0,
+        onEnd: () => {
+            state.voice.isReading = false;
+            renderCardVoiceControls({
+                container: elements.cardVoiceControls,
+                onReadAloud: handleReadAloud,
+                isReading: false,
+                disabled: false
+            });
+        },
+        onError: (error) => {
+            console.error('语音朗读错误:', error);
+            showToast('朗读失败，请重试', 'error');
+            state.voice.isReading = false;
+            renderCardVoiceControls({
+                container: elements.cardVoiceControls,
+                onReadAloud: handleReadAloud,
+                isReading: false,
+                disabled: false
+            });
+        }
+    });
+}
+
+/**
+ * 渲染卡牌区域的语音控制
+ */
+function renderCardVoiceSection() {
+    if (!elements.cardVoiceControls) return;
+
+    const hasTTS = state.voice.synthesizer !== null;
+    renderCardVoiceControls({
+        container: elements.cardVoiceControls,
+        onReadAloud: hasTTS ? handleReadAloud : null,
+        isReading: state.voice.isReading,
+        disabled: !hasTTS
+    });
+}
+
+/**
+ * 渲染保存模态框的语音输入控制
+ */
+function renderSaveModalVoiceControls() {
+    if (!elements.saveVoiceWrapper) return;
+
+    const hasASR = isSpeechRecognitionSupported();
+    renderModalVoiceControls({
+        container: elements.saveVoiceWrapper,
+        onVoiceInput: hasASR ? () => handleVoiceInput(elements.answerInput, 'save') : null,
+        isListening: state.voice.isListening,
+        status: state.voice.isListening ? '正在聆听...' : ''
+    });
+}
+
+/**
+ * 渲染编辑模态框的语音输入控制
+ */
+function renderEditModalVoiceControls() {
+    if (!elements.editVoiceWrapper) return;
+
+    const hasASR = isSpeechRecognitionSupported();
+    renderModalVoiceControls({
+        container: elements.editVoiceWrapper,
+        onVoiceInput: hasASR ? () => handleVoiceInput(elements.editAnswerInput, 'edit') : null,
+        isListening: state.voice.isListening,
+        status: state.voice.isListening ? '正在聆听...' : ''
+    });
+}
+
+/**
+ * 处理语音输入
+ * @param {HTMLTextAreaElement} textarea - 目标文本域
+ * @param {string} context - 上下文 ('save' | 'edit')
+ */
+async function handleVoiceInput(textarea, context) {
+    // 检查浏览器支持
+    if (!isSpeechRecognitionSupported()) {
+        showToast('您的浏览器不支持语音输入功能', 'error');
+        return;
+    }
+
+    // 如果正在录音，则停止
+    if (state.voice.isListening) {
+        stopVoiceInput();
+        return;
+    }
+
+    // 请求麦克风权限
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+        showToast('需要麦克风权限才能使用语音输入', 'error');
+        return;
+    }
+
+    // 创建识别器
+    const recognizer = createSpeechRecognizer();
+    if (!recognizer) {
+        showToast('语音识别初始化失败', 'error');
+        return;
+    }
+
+    state.voice.recognizer = recognizer;
+    state.voice.isListening = true;
+
+    // 更新UI
+    if (context === 'save') {
+        renderSaveModalVoiceControls();
+    } else {
+        renderEditModalVoiceControls();
+    }
+
+    // 保存原始值，用于追加
+    let currentValue = textarea.value;
+    if (currentValue && !currentValue.endsWith(' ')) {
+        currentValue += ' ';
+    }
+
+    recognizer.start({
+        onResult: (finalTranscript, interimTranscript) => {
+            // 更新文本域内容
+            const newText = currentValue + finalTranscript + interimTranscript;
+            textarea.value = newText;
+
+            // 触发 input 事件以更新任何监听器
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+        onError: (error, message) => {
+            console.error('语音识别错误:', error, message);
+            showToast(message, 'error');
+            stopVoiceInput();
+        },
+        onEnd: () => {
+            // 识别结束（可能是自动停止或用户停止）
+            if (state.voice.isListening) {
+                // 如果还在监听状态，重新启动以持续识别
+                try {
+                    recognizer.native.start();
+                } catch (e) {
+                    // 可能已经达到最大识别时间
+                    stopVoiceInput();
+                }
+            }
+        }
+    });
+}
+
+/**
+ * 停止语音输入
+ */
+function stopVoiceInput() {
+    if (state.voice.recognizer) {
+        state.voice.recognizer.stop();
+        state.voice.recognizer = null;
+    }
+    state.voice.isListening = false;
+
+    // 刷新UI
+    if (elements.saveModal.classList.contains('active')) {
+        renderSaveModalVoiceControls();
+    }
+    if (elements.editModal.classList.contains('active')) {
+        renderEditModalVoiceControls();
+    }
+}
+
 function init() {
     applyTheme(getStoredTheme());
     refreshCardView();
@@ -1114,6 +1362,9 @@ function init() {
 
     // 初始化每日推荐
     initDailyCard();
+
+    // 初始化语音服务
+    initVoiceService();
 
     // 处理分享链接
     handleShareLink();
