@@ -34,7 +34,7 @@ export function renderCard({ currentCard, categoryNames, levelNames, elements })
     shareBtn.style.display = 'inline-block';
 }
 
-export function renderHistory({ history, levelNames, historyList }) {
+export function renderHistory({ history, levelNames, categoryNames, historyList, onEdit, onDelete }) {
     historyList.replaceChildren();
 
     if (!history.length) {
@@ -47,16 +47,197 @@ export function renderHistory({ history, levelNames, historyList }) {
     const fragment = document.createDocumentFragment();
     history.forEach((item) => {
         const wrapper = createElement('div', 'history-item');
-        wrapper.appendChild(createElement('div', 'timestamp', item.timestamp));
+        wrapper.dataset.id = item.id;
 
+        // 头部信息：时间戳 + 操作按钮
+        const header = createElement('div', 'history-item-header');
+        header.appendChild(createElement('span', 'timestamp', item.timestamp));
+        
+        // 操作按钮组
+        const actions = createElement('div', 'history-item-actions');
+        
+        const editBtn = createElement('button', 'history-action-btn edit-btn', '✏️');
+        editBtn.title = '编辑';
+        editBtn.dataset.action = 'edit';
+        editBtn.dataset.id = item.id;
+        
+        const deleteBtn = createElement('button', 'history-action-btn delete-btn', '🗑️');
+        deleteBtn.title = '删除';
+        deleteBtn.dataset.action = 'delete';
+        deleteBtn.dataset.id = item.id;
+        
+        actions.appendChild(editBtn);
+        actions.appendChild(deleteBtn);
+        header.appendChild(actions);
+        wrapper.appendChild(header);
+
+        // 类别和难度标签
+        const tagsRow = createElement('div', 'history-item-tags');
+        const categoryName = categoryNames[item.card.category] || item.card.category;
+        const categoryTag = createElement('span', `category-tag category-${item.card.category}`, categoryName);
+        tagsRow.appendChild(categoryTag);
+        
         const badge = createElement('span', `level-badge level-${item.card.level}`);
         badge.textContent = levelNames[String(item.card.level)] || `第${item.card.level}级`;
-        wrapper.appendChild(badge);
+        tagsRow.appendChild(badge);
+        wrapper.appendChild(tagsRow);
 
+        // 问题和回答
         wrapper.appendChild(createElement('div', 'question', item.card.question));
         wrapper.appendChild(createElement('div', 'answer', item.answer));
+        
+        // 如果有更新时间，显示
+        if (item.updatedAt) {
+            wrapper.appendChild(createElement('div', 'updated-at', `编辑于 ${item.updatedAt}`));
+        }
+
+        // 绑定事件
+        if (onEdit) {
+            editBtn.addEventListener('click', () => onEdit(item));
+        }
+        if (onDelete) {
+            deleteBtn.addEventListener('click', () => onDelete(item));
+        }
+
         fragment.appendChild(wrapper);
     });
 
     historyList.appendChild(fragment);
+}
+
+/**
+ * 渲染筛选控件
+ * @param {Object} params - 参数对象
+ * @param {HTMLElement} params.container - 容器元素
+ * @param {Object} params.categoryNames - 类别名称映射
+ * @param {Function} params.onFilterChange - 筛选变化回调
+ */
+export function renderHistoryFilters({ container, categoryNames, onFilterChange }) {
+    container.replaceChildren();
+    
+    const wrapper = createElement('div', 'history-filters');
+    
+    // 日期筛选
+    const dateFilterGroup = createElement('div', 'filter-group');
+    dateFilterGroup.appendChild(createElement('label', '', '时间：'));
+    
+    const dateSelect = createElement('select', 'filter-select');
+    dateSelect.dataset.filterType = 'date';
+    const dateOptions = [
+        { value: 'all', label: '全部时间' },
+        { value: 'today', label: '今天' },
+        { value: 'week', label: '最近7天' },
+        { value: 'month', label: '最近30天' },
+        { value: 'year', label: '最近一年' }
+    ];
+    dateOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        dateSelect.appendChild(option);
+    });
+    dateFilterGroup.appendChild(dateSelect);
+    wrapper.appendChild(dateFilterGroup);
+    
+    // 类别筛选
+    const categoryFilterGroup = createElement('div', 'filter-group');
+    categoryFilterGroup.appendChild(createElement('label', '', '类别：'));
+    
+    const categorySelect = createElement('select', 'filter-select');
+    categorySelect.dataset.filterType = 'category';
+    const categoryOptions = [
+        { value: 'all', label: '全部类别' },
+        ...Object.entries(categoryNames).map(([key, name]) => ({ value: key, label: name }))
+    ];
+    categoryOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.label;
+        categorySelect.appendChild(option);
+    });
+    categoryFilterGroup.appendChild(categorySelect);
+    wrapper.appendChild(categoryFilterGroup);
+    
+    // 绑定事件
+    if (onFilterChange) {
+        dateSelect.addEventListener('change', (e) => {
+            onFilterChange({ date: e.target.value, category: categorySelect.value });
+        });
+        categorySelect.addEventListener('change', (e) => {
+            onFilterChange({ date: dateSelect.value, category: e.target.value });
+        });
+    }
+    
+    container.appendChild(wrapper);
+}
+
+/**
+ * 渲染导出控件
+ * @param {Object} params - 参数对象
+ * @param {HTMLElement} params.container - 容器元素
+ * @param {Function} params.onExportJSON - 导出JSON回调
+ * @param {Function} params.onExportImage - 导出图片回调
+ * @param {Function} params.onExportAlbum - 导出纪念册回调
+ */
+export function renderExportControls({ container, onExportJSON, onExportImage, onExportAlbum }) {
+    container.replaceChildren();
+    
+    const wrapper = createElement('div', 'export-controls');
+    
+    const exportBtn = createElement('button', 'btn btn-secondary export-btn', '📤 导出');
+    exportBtn.title = '导出历史记录';
+    
+    const dropdown = createElement('div', 'export-dropdown');
+    dropdown.style.display = 'none';
+    
+    const jsonOption = createElement('div', 'export-option', '📄 导出为 JSON');
+    jsonOption.dataset.exportType = 'json';
+    
+    const imageOption = createElement('div', 'export-option', '🖼️ 导出为图片');
+    imageOption.dataset.exportType = 'image';
+    
+    const albumOption = createElement('div', 'export-option', '📖 生成纪念册');
+    albumOption.dataset.exportType = 'album';
+    
+    dropdown.appendChild(jsonOption);
+    dropdown.appendChild(imageOption);
+    dropdown.appendChild(albumOption);
+    
+    wrapper.appendChild(exportBtn);
+    wrapper.appendChild(dropdown);
+    
+    // 切换下拉菜单显示
+    exportBtn.addEventListener('click', () => {
+        const isVisible = dropdown.style.display !== 'none';
+        dropdown.style.display = isVisible ? 'none' : 'block';
+    });
+    
+    // 点击外部关闭下拉菜单
+    document.addEventListener('click', (e) => {
+        if (!wrapper.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+    
+    // 绑定导出事件
+    if (onExportJSON) {
+        jsonOption.addEventListener('click', () => {
+            onExportJSON();
+            dropdown.style.display = 'none';
+        });
+    }
+    if (onExportImage) {
+        imageOption.addEventListener('click', () => {
+            onExportImage();
+            dropdown.style.display = 'none';
+        });
+    }
+    if (onExportAlbum) {
+        albumOption.addEventListener('click', () => {
+            onExportAlbum();
+            dropdown.style.display = 'none';
+        });
+    }
+    
+    container.appendChild(wrapper);
 }
