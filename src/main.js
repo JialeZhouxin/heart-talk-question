@@ -13,7 +13,7 @@ import {
 import {
     getAllCardPacks, importCardPackFromJSON, downloadCardPack,
     setActiveCardPack, getActiveCardPack, clearActiveCardPack,
-    BUILT_IN_PACKS
+    deleteCardPack, BUILT_IN_PACKS
 } from './core/card-pack-service.js';
 import {
     getTodayCard, markTodayCardAnswered, getDailyCardStatus,
