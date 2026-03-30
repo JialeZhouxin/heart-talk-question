@@ -52,8 +52,22 @@ const elements = {
     confirmMessage: document.getElementById('confirmMessage'),
     confirmOkBtn: document.getElementById('confirmOkBtn'),
     confirmCancelBtn: document.getElementById('confirmCancelBtn'),
-    themeSelector: document.getElementById('themeSelector')
+    themeSelector: document.getElementById('themeSelector'),
+    // 分享增强功能元素
+    generateImageBtn: document.getElementById('generateImageBtn'),
+    copyLinkBtn: document.getElementById('copyLinkBtn'),
+    imagePreviewContainer: document.getElementById('imagePreviewContainer'),
+    generatedImagePreview: document.getElementById('generatedImagePreview'),
+    downloadImageBtn: document.getElementById('downloadImageBtn'),
+    shareCardTemplate: document.getElementById('shareCardTemplate'),
+    shareCardCategory: document.getElementById('shareCardCategory'),
+    shareCardQuestion: document.getElementById('shareCardQuestion'),
+    shareCardAnswer: document.getElementById('shareCardAnswer'),
+    shareCardAnswerSection: document.getElementById('shareCardAnswerSection')
 };
+
+// 当前生成的图片数据
+let currentGeneratedImage = null;
 
 function buildNamesMap(selector, dataKey) {
     const map = {};
@@ -286,6 +300,200 @@ async function copyShareLink() {
     }
 }
 
+// ==================== 分享功能增强 ====================
+
+/**
+ * 生成分享图片
+ * 使用 html2canvas 将隐藏模板转为图片
+ */
+async function generateShareImage() {
+    if (!state.currentCard) {
+        showToast('请先抽取一张卡牌', 'error');
+        return;
+    }
+
+    try {
+        showToast('正在生成分享图片...', 'info');
+
+        // 更新分享卡片模板内容
+        elements.shareCardCategory.textContent = categoryNames[state.currentCard.category] || state.currentCard.category;
+        elements.shareCardQuestion.textContent = state.currentCard.question;
+
+        // 获取用户回答
+        const answer = getSavedAnswerForCurrentCard();
+        if (answer) {
+            elements.shareCardAnswer.textContent = answer;
+            elements.shareCardAnswerSection.style.display = 'block';
+        } else {
+            elements.shareCardAnswerSection.style.display = 'none';
+        }
+
+        // 临时将模板移到可视区域以便 html2canvas 渲染
+        const originalPosition = elements.shareCardTemplate.style.position;
+        const originalLeft = elements.shareCardTemplate.style.left;
+        elements.shareCardTemplate.style.position = 'fixed';
+        elements.shareCardTemplate.style.left = '-9999px';
+        elements.shareCardTemplate.style.top = '-9999px';
+
+        // 等待字体加载完成
+        await document.fonts.ready;
+
+        // 检测是否在 file:// 协议下运行
+        const isFileProtocol = window.location.protocol === 'file:';
+        if (isFileProtocol) {
+            showToast('请使用 HTTP 服务器访问以生成图片（如 python -m http.server 8080）', 'error');
+            // 恢复模板位置
+            elements.shareCardTemplate.style.position = originalPosition;
+            elements.shareCardTemplate.style.left = originalLeft;
+            return;
+        }
+
+        // 使用 html2canvas 生成图片
+        const canvas = await html2canvas(elements.shareCardTemplate.querySelector('.share-card-visual'), {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: null,
+            logging: false,
+            width: 600,
+            height: 800
+        });
+
+        // 恢复模板位置
+        elements.shareCardTemplate.style.position = originalPosition;
+        elements.shareCardTemplate.style.left = originalLeft;
+
+        // 转换为图片数据
+        currentGeneratedImage = canvas.toDataURL('image/png');
+
+        // 显示预览
+        elements.generatedImagePreview.src = currentGeneratedImage;
+        elements.imagePreviewContainer.style.display = 'block';
+
+        showToast('分享图片生成成功！', 'success');
+    } catch (error) {
+        console.error('生成图片失败:', error);
+        showToast('生成图片失败，请重试', 'error');
+    }
+}
+
+/**
+ * 下载生成的分享图片
+ */
+function downloadShareImage() {
+    if (!currentGeneratedImage) {
+        showToast('请先生成分享图片', 'error');
+        return;
+    }
+
+    const link = document.createElement('a');
+    link.download = `心语卡牌_${Date.now()}.png`;
+    link.href = currentGeneratedImage;
+    link.click();
+
+    showToast('图片下载已开始', 'success');
+}
+
+/**
+ * 生成分享链接（Base64 编码）
+ * 包含卡牌信息和用户回答
+ */
+function generateShareLink() {
+    if (!state.currentCard) {
+        showToast('请先抽取一张卡牌', 'error');
+        return;
+    }
+
+    try {
+        // 获取用户回答
+        const answer = getSavedAnswerForCurrentCard();
+
+        // 构建分享数据
+        const shareData = {
+            cardId: state.currentCard.id,
+            category: state.currentCard.category,
+            level: state.currentCard.level,
+            question: state.currentCard.question,
+            answer: answer || '',
+            timestamp: Date.now()
+        };
+
+        // Base64 编码
+        const encoded = btoa(encodeURIComponent(JSON.stringify(shareData)));
+        const shareUrl = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+
+        // 复制到剪贴板
+        if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showToast('分享链接已复制到剪贴板', 'success');
+            }).catch(() => {
+                fallbackCopy(shareUrl);
+                showToast('分享链接已复制到剪贴板', 'success');
+            });
+        } else if (fallbackCopy(shareUrl)) {
+            showToast('分享链接已复制到剪贴板', 'success');
+        } else {
+            showToast('复制失败，请手动复制', 'error');
+        }
+    } catch (error) {
+        console.error('生成分享链接失败:', error);
+        showToast('生成分享链接失败', 'error');
+    }
+}
+
+/**
+ * 处理分享链接
+ * 解析 URL hash 中的分享数据并加载卡牌
+ */
+function handleShareLink() {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#share=')) return;
+
+    try {
+        const encoded = hash.slice(7); // 移除 '#share='
+        const decoded = decodeURIComponent(atob(encoded));
+        const shareData = JSON.parse(decoded);
+
+        // 查找卡牌
+        const card = cards.find(c => c.id === shareData.cardId);
+        if (!card) {
+            showToast('分享的卡牌不存在或已被删除', 'error');
+            return;
+        }
+
+        // 设置当前卡牌
+        state.currentCard = card;
+        refreshCardView();
+
+        // 如果有回答，添加到历史中
+        if (shareData.answer) {
+            const historyItem = {
+                id: Date.now(),
+                timestamp: new Date(shareData.timestamp || Date.now()).toLocaleString('zh-CN'),
+                card: card,
+                answer: shareData.answer
+            };
+
+            // 检查是否已存在相同卡牌的回答
+            const existingIndex = state.history.findIndex(h => h.card.id === card.id);
+            if (existingIndex === -1) {
+                state.history.unshift(historyItem);
+                saveHistory(state.history);
+                refreshHistoryView();
+            }
+        }
+
+        // 清除 hash
+        window.history.replaceState(null, null, window.location.pathname);
+
+        showToast('已加载分享的卡牌', 'success');
+        elements.cardContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (error) {
+        console.error('解析分享链接失败:', error);
+        showToast('分享链接无效或已过期', 'error');
+    }
+}
+
 async function clearHistory() {
     const confirmed = await showConfirm('确定要清空所有历史记录吗？此操作不可恢复。');
     if (!confirmed) return;
@@ -311,6 +519,18 @@ function setupEventListeners() {
     elements.closeShareBtn.addEventListener('click', closeShareModal);
     elements.copyShareBtn.addEventListener('click', copyShareLink);
     elements.clearHistoryBtn.addEventListener('click', clearHistory);
+
+    // 分享增强功能事件监听
+    if (elements.generateImageBtn) {
+        elements.generateImageBtn.addEventListener('click', generateShareImage);
+    }
+    if (elements.copyLinkBtn) {
+        elements.copyLinkBtn.addEventListener('click', generateShareLink);
+    }
+    if (elements.downloadImageBtn) {
+        elements.downloadImageBtn.addEventListener('click', downloadShareImage);
+    }
+
     elements.themeSelector.addEventListener('click', (event) => {
         const button = event.target.closest('[data-theme-choice]');
         if (!button) return;
@@ -345,6 +565,9 @@ function init() {
     refreshCardView();
     refreshHistoryView();
     setupEventListeners();
+
+    // 处理分享链接
+    handleShareLink();
 }
 
 init();

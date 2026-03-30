@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -90,8 +91,20 @@
                 <div class="question" id="shareQuestion"></div>
                 <div class="answer" id="shareAnswer"></div>
             </div>
-            <button class="btn" id="copyShareBtn">复制内容</button>
-            <button class="btn btn-secondary" id="closeShareBtn">关闭</button>
+            <div class="share-actions">
+                <div class="share-actions-row">
+                    <button class="btn" id="copyShareBtn">复制文本</button>
+                    <button class="btn btn-secondary" id="generateImageBtn">生成分享图片</button>
+                </div>
+                <div class="share-actions-row">
+                    <button class="btn btn-secondary" id="copyLinkBtn">复制分享链接</button>
+                    <button class="btn btn-secondary" id="closeShareBtn">关闭</button>
+                </div>
+            </div>
+            <div id="imagePreviewContainer" style="display: none; margin-top: 15px; text-align: center;">
+                <img id="generatedImagePreview" class="share-image-preview" alt="分享卡片预览">
+                <button class="btn" id="downloadImageBtn" style="margin-top: 10px;">下载图片</button>
+            </div>
         </div>
     </div>
 
@@ -107,6 +120,31 @@
     </div>
 
     <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- 隐藏的图片分享卡片模板 -->
+    <div id="shareCardTemplate" style="position: fixed; left: -9999px; top: 0; width: 600px; height: 800px; overflow: hidden;">
+        <div class="share-card-visual">
+            <div class="share-card-leaf share-card-leaf-1">🌿</div>
+            <div class="share-card-leaf share-card-leaf-2">🍃</div>
+            <div class="share-card-leaf share-card-leaf-3">🌱</div>
+            <div class="share-card-header">
+                <span class="share-card-logo">🌿</span>
+                <span class="share-card-title">心语卡牌</span>
+            </div>
+            <div class="share-card-content">
+                <div class="share-card-category" id="shareCardCategory"></div>
+                <div class="share-card-question" id="shareCardQuestion"></div>
+                <div class="share-card-answer-section" id="shareCardAnswerSection">
+                    <div class="share-card-answer-label">我的回答</div>
+                    <div class="share-card-answer" id="shareCardAnswer"></div>
+                </div>
+            </div>
+            <div class="share-card-footer">
+                <div class="share-card-slogan">用问题打开话匣子，让彼此更靠近一点</div>
+                <div class="share-card-qrcode-text">扫码体验心语卡牌</div>
+            </div>
+        </div>
+    </div>
 
     <script>
         (function loadAppScript() {
