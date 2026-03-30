@@ -56,11 +56,25 @@
             </div>
         </div>
 
+        <!-- 每日推荐 -->
+        <div class="daily-card-section" id="dailyCardSection">
+            <div id="dailyCardContainer"></div>
+        </div>
+
+        <!-- 卡牌包指示器 -->
+        <div id="activePackIndicator"></div>
+
         <div class="controls">
             <button class="btn" id="drawBtn">抽取卡牌</button>
             <button class="btn btn-secondary" id="saveBtn" style="display: none;">保存回答</button>
             <button class="btn btn-secondary" id="shareBtn" style="display: none;">分享</button>
             <button class="btn btn-secondary" id="statsBtn">📊 数据统计</button>
+        </div>
+
+        <!-- 功能入口 -->
+        <div class="feature-buttons">
+            <button class="filter-btn feature-btn" id="customCardBtn">✏️ 自定义卡牌</button>
+            <button class="filter-btn feature-btn" id="cardPackBtn">📦 卡牌包</button>
         </div>
 
         <div class="history-section">
@@ -140,6 +154,24 @@
             <h3>📊 数据统计</h3>
             <div id="statsContainer"></div>
             <button class="btn btn-secondary" id="closeStatsBtn" style="margin-top: 16px; width: 100%;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 自定义卡牌模态框 -->
+    <div class="modal" id="customCardModal">
+        <div class="modal-content custom-card-modal-content">
+            <h3>✏️ 自定义卡牌</h3>
+            <div id="customCardContainer"></div>
+            <button class="btn btn-secondary" id="closeCustomCardBtn" style="margin-top: 16px; width: 100%;">关闭</button>
+        </div>
+    </div>
+
+    <!-- 卡牌包模态框 -->
+    <div class="modal" id="cardPackModal">
+        <div class="modal-content card-pack-modal-content">
+            <h3>📦 卡牌包</h3>
+            <div id="cardPackContainer"></div>
+            <button class="btn btn-secondary" id="closeCardPackBtn" style="margin-top: 16px; width: 100%;">关闭</button>
         </div>
     </div>
 
