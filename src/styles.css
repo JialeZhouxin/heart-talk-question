@@ -322,6 +322,279 @@ header p {
     gap: 10px;
 }
 
+.history-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==================== 历史记录筛选控件 ==================== */
+.history-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(255, 247, 238, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(228, 204, 176, 0.5);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.filter-select {
+    border: 1px solid #d6b58f;
+    background: #fff7ee;
+    color: #80583a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    min-height: 36px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-select:hover,
+.filter-select:focus {
+    border-color: #b46a2d;
+    outline: none;
+    box-shadow: 0 2px 8px rgba(167, 101, 44, 0.15);
+}
+
+/* ==================== 历史记录项样式增强 ==================== */
+.history-item {
+    background: var(--paper-strong);
+    border: 1px solid #ecd4b8;
+    border-left: 4px solid #c68449;
+    border-radius: var(--radius-md);
+    padding: 13px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(95, 60, 25, 0.1);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.history-item-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.history-action-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.history-action-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+}
+
+.history-action-btn.edit-btn:hover {
+    background-color: rgba(76, 175, 80, 0.15);
+}
+
+.history-action-btn.delete-btn:hover {
+    background-color: rgba(244, 67, 54, 0.15);
+}
+
+.history-item-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.category-couple { background: #fce4ec; color: #c2185b; border-color: #f8bbd9; }
+.category-friend { background: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
+.category-family { background: #fff3e0; color: #f57c00; border-color: #ffe0b2; }
+.category-self { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
+.category-clear_thinking { background: #e8f5e9; color: #388e3c; border-color: #c8e6c9; }
+
+.history-item .updated-at {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-align: right;
+}
+
+/* ==================== 导出控件样式 ==================== */
+.export-controls {
+    position: relative;
+}
+
+.export-btn {
+    min-height: 32px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+}
+
+.export-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: white;
+    border: 1px solid #e0d0b8;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(95, 60, 25, 0.15);
+    min-width: 160px;
+    z-index: 100;
+    overflow: hidden;
+}
+
+.export-option {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #5c3d24;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid rgba(228, 204, 176, 0.4);
+}
+
+.export-option:last-child {
+    border-bottom: none;
+}
+
+.export-option:hover {
+    background-color: #fff7ee;
+}
+
+/* ==================== 深色主题适配 ==================== */
+:root[data-theme='dark'] .history-filters {
+    background: rgba(47, 40, 33, 0.6);
+    border-color: rgba(90, 74, 58, 0.5);
+}
+
+:root[data-theme='dark'] .filter-select {
+    border-color: #5a4a3a;
+    background: #2b221a;
+    color: #e3ccb2;
+}
+
+:root[data-theme='dark'] .filter-select:hover,
+:root[data-theme='dark'] .filter-select:focus {
+    border-color: #8a6a4a;
+}
+
+:root[data-theme='dark'] .export-dropdown {
+    background: #2f2821;
+    border-color: #5a4a3a;
+}
+
+:root[data-theme='dark'] .export-option {
+    color: #e3ccb2;
+    border-color: rgba(90, 74, 58, 0.4);
+}
+
+:root[data-theme='dark'] .export-option:hover {
+    background-color: #3a3027;
+}
+
+/* ==================== 森林主题适配 ==================== */
+:root[data-theme='forest'] .history-filters {
+    background: rgba(240, 251, 244, 0.6);
+    border-color: rgba(191, 218, 200, 0.5);
+}
+
+:root[data-theme='forest'] .filter-select {
+    border-color: #a8cdb5;
+    background: #f2faf5;
+    color: #366e50;
+}
+
+:root[data-theme='forest'] .filter-select:hover,
+:root[data-theme='forest'] .filter-select:focus {
+    border-color: #2d704d;
+}
+
+:root[data-theme='forest'] .export-dropdown {
+    background: #f7fcf8;
+    border-color: #bfdac8;
+}
+
+:root[data-theme='forest'] .export-option {
+    color: #2a5a40;
+    border-color: rgba(191, 218, 200, 0.4);
+}
+
+:root[data-theme='forest'] .export-option:hover {
+    background-color: #eef8f1;
+}
+
+:root[data-theme='forest'] .category-couple { background: #fce4ec; color: #c2185b; border-color: #f8bbd9; }
+:root[data-theme='forest'] .category-friend { background: #e3f2fd; color: #1976d2; border-color: #bbdefb; }
+:root[data-theme='forest'] .category-family { background: #fff3e0; color: #f57c00; border-color: #ffe0b2; }
+:root[data-theme='forest'] .category-self { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
+:root[data-theme='forest'] .category-clear_thinking { background: #e8f5e9; color: #388e3c; border-color: #c8e6c9; }
+
+/* ==================== 移动端适配 ==================== */
+@media (max-width: 600px) {
+    .history-filters {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .filter-group {
+        width: 100%;
+    }
+    
+    .filter-select {
+        flex: 1;
+    }
+    
+    .history-item-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .history-item-tags {
+        flex-wrap: wrap;
+    }
+    
+    .export-dropdown {
+        right: auto;
+        left: 0;
+    }
+}
+
 .history-list {
     max-height: 420px;
     overflow-y: auto;

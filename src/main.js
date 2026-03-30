@@ -1,13 +1,20 @@
 ﻿import { cards } from './data/cards.js';
 import { filterCards, drawRandomCard } from './core/card-service.js';
-import { loadHistory, saveHistory, clearHistoryStore } from './core/history-store.js';
-import { renderCard, renderHistory } from './ui/render.js';
+import { loadHistory, saveHistory, clearHistoryStore, updateHistoryItem, deleteHistoryItem } from './core/history-store.js';
+import { filterHistory, exportToJSON, downloadJSON } from './core/history-filter.js';
+import { generateHistoryAlbumImage, downloadAlbumImage } from './core/history-export.js';
+import { renderCard, renderHistory, renderHistoryFilters, renderExportControls } from './ui/render.js';
 
 const state = {
     currentCard: null,
     currentCategory: 'all',
     currentLevel: 'all',
-    history: loadHistory()
+    history: loadHistory(),
+    historyFilters: {
+        date: 'all',
+        category: 'all'
+    },
+    editingItem: null
 };
 
 const UI_TIMING = {
@@ -34,12 +41,19 @@ const elements = {
     saveBtn: document.getElementById('saveBtn'),
     shareBtn: document.getElementById('shareBtn'),
     historyList: document.getElementById('historyList'),
+    historyFiltersContainer: document.getElementById('historyFiltersContainer'),
+    historyExportContainer: document.getElementById('historyExportContainer'),
     saveModal: document.getElementById('saveModal'),
     shareModal: document.getElementById('shareModal'),
+    editModal: document.getElementById('editModal'),
     saveModalQuestion: document.getElementById('saveModalQuestion'),
     answerInput: document.getElementById('answerInput'),
+    editModalQuestion: document.getElementById('editModalQuestion'),
+    editAnswerInput: document.getElementById('editAnswerInput'),
     confirmSaveBtn: document.getElementById('confirmSaveBtn'),
     cancelSaveBtn: document.getElementById('cancelSaveBtn'),
+    confirmEditBtn: document.getElementById('confirmEditBtn'),
+    cancelEditBtn: document.getElementById('cancelEditBtn'),
     shareQuestion: document.getElementById('shareQuestion'),
     shareAnswer: document.getElementById('shareAnswer'),
     copyShareBtn: document.getElementById('copyShareBtn'),
@@ -98,12 +112,115 @@ function refreshCardView() {
     });
 }
 
+function getFilteredHistory() {
+    return filterHistory(state.history, state.historyFilters);
+}
+
 function refreshHistoryView() {
+    const filteredHistory = getFilteredHistory();
     renderHistory({
-        history: state.history,
+        history: filteredHistory,
         levelNames,
-        historyList: elements.historyList
+        categoryNames,
+        historyList: elements.historyList,
+        onEdit: openEditModal,
+        onDelete: handleDeleteHistoryItem
     });
+}
+
+function handleHistoryFilterChange(filters) {
+    state.historyFilters = { ...state.historyFilters, ...filters };
+    refreshHistoryView();
+}
+
+function openEditModal(item) {
+    state.editingItem = item;
+    elements.editModalQuestion.textContent = item.card.question;
+    elements.editAnswerInput.value = item.answer;
+    elements.editModal.classList.add('active');
+    elements.editAnswerInput.focus();
+}
+
+function closeEditModal() {
+    elements.editModal.classList.remove('active');
+    state.editingItem = null;
+}
+
+function saveEditedAnswer() {
+    if (!state.editingItem) return;
+    
+    const newAnswer = elements.editAnswerInput.value.trim();
+    if (!newAnswer) {
+        showToast('回答内容不能为空', 'error');
+        return;
+    }
+    
+    const newHistory = updateHistoryItem(state.history, state.editingItem.id, newAnswer);
+    if (newHistory === null) {
+        showToast('保存失败，请重试', 'error');
+        return;
+    }
+    
+    state.history = newHistory;
+    refreshHistoryView();
+    closeEditModal();
+    showToast('回答已更新', 'success');
+}
+
+async function handleDeleteHistoryItem(item) {
+    const confirmed = await showConfirm('确定要删除这条历史记录吗？此操作不可恢复。');
+    if (!confirmed) return;
+    
+    const newHistory = deleteHistoryItem(state.history, item.id);
+    if (newHistory === null) {
+        showToast('删除失败，请重试', 'error');
+        return;
+    }
+    
+    state.history = newHistory;
+    refreshHistoryView();
+    showToast('记录已删除', 'success');
+}
+
+function handleExportJSON() {
+    const filteredHistory = getFilteredHistory();
+    if (!filteredHistory.length) {
+        showToast('没有可导出的记录', 'error');
+        return;
+    }
+    
+    const jsonString = exportToJSON(filteredHistory);
+    downloadJSON(jsonString);
+    showToast('JSON文件已下载', 'success');
+}
+
+async function handleExportImage() {
+    const filteredHistory = getFilteredHistory();
+    if (!filteredHistory.length) {
+        showToast('没有可导出的记录', 'error');
+        return;
+    }
+    
+    try {
+        showToast('正在生成图片...', 'info');
+        const imageData = await generateHistoryAlbumImage(filteredHistory, categoryNames, levelNames);
+        downloadAlbumImage(imageData);
+        showToast('图片已下载', 'success');
+    } catch (error) {
+        console.error('导出图片失败:', error);
+        showToast(error.message || '生成图片失败，请重试', 'error');
+    }
+}
+
+async function handleExportAlbum() {
+    const filteredHistory = getFilteredHistory();
+    if (!filteredHistory.length) {
+        showToast('没有可导出的记录', 'error');
+        return;
+    }
+    
+    // 纪念册功能与导出图片相同
+    await handleExportImage();
 }
 
 function getStoredTheme() {
@@ -519,6 +636,19 @@ function setupEventListeners() {
     elements.closeShareBtn.addEventListener('click', closeShareModal);
     elements.copyShareBtn.addEventListener('click', copyShareLink);
     elements.clearHistoryBtn.addEventListener('click', clearHistory);
+    
+    // 编辑模态框事件
+    if (elements.confirmEditBtn) {
+        elements.confirmEditBtn.addEventListener('click', saveEditedAnswer);
+    }
+    if (elements.cancelEditBtn) {
+        elements.cancelEditBtn.addEventListener('click', closeEditModal);
+    }
+    if (elements.editModal) {
+        elements.editModal.addEventListener('click', (event) => {
+            if (event.target === elements.editModal) closeEditModal();
+        });
+    }
 
     // 分享增强功能事件监听
     if (elements.generateImageBtn) {
@@ -565,6 +695,25 @@ function init() {
     refreshCardView();
     refreshHistoryView();
     setupEventListeners();
+    
+    // 初始化筛选控件
+    if (elements.historyFiltersContainer) {
+        renderHistoryFilters({
+            container: elements.historyFiltersContainer,
+            categoryNames,
+            onFilterChange: handleHistoryFilterChange
+        });
+    }
+    
+    // 初始化导出控件
+    if (elements.historyExportContainer) {
+        renderExportControls({
+            container: elements.historyExportContainer,
+            onExportJSON: handleExportJSON,
+            onExportImage: handleExportImage,
+            onExportAlbum: handleExportAlbum
+        });
+    }
 
     // 处理分享链接
     handleShareLink();

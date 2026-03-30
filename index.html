@@ -64,8 +64,12 @@
         <div class="history-section">
             <h3>
                 对话历史
-                <button class="filter-btn" id="clearHistoryBtn" style="font-size: 0.8rem; padding: 5px 12px;">清空</button>
+                <div class="history-header-actions">
+                    <div id="historyExportContainer"></div>
+                    <button class="filter-btn" id="clearHistoryBtn" style="font-size: 0.8rem; padding: 5px 12px;">清空</button>
+                </div>
             </h3>
+            <div id="historyFiltersContainer"></div>
             <div class="history-list" id="historyList">
                 <div class="empty-state">
                     <p>暂无对话记录</p>
@@ -105,6 +109,16 @@
                 <img id="generatedImagePreview" class="share-image-preview" alt="分享卡片预览">
                 <button class="btn" id="downloadImageBtn" style="margin-top: 10px;">下载图片</button>
             </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3>编辑回答</h3>
+            <p id="editModalQuestion" style="margin-bottom: 15px; color: #6b7280; font-weight: 500;"></p>
+            <textarea id="editAnswerInput" placeholder="编辑你的回答..."></textarea>
+            <button class="btn" id="confirmEditBtn">保存修改</button>
+            <button class="btn btn-secondary" id="cancelEditBtn">取消</button>
         </div>
     </div>
 
