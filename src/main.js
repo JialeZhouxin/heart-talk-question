@@ -739,8 +739,7 @@ function init() {
             onExportJSON: handleExportJSON,
             onExportImage: handleExportImage,
             onExportAlbum: handleExportAlbum,
-            onShowStats: openStatsModal,
-            onShowReport: openReportModal
+            onShowStats: openStatsModal
         });
     }
 
