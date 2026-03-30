@@ -28,3 +28,41 @@ export function clearHistoryStore() {
         return false;
     }
 }
+
+export function updateHistoryItem(history, id, newAnswer) {
+    try {
+        const index = history.findIndex(item => item.id === id);
+        if (index === -1) return null;
+        
+        const updatedItem = {
+            ...history[index],
+            answer: newAnswer,
+            updatedAt: new Date().toLocaleString('zh-CN')
+        };
+        
+        const newHistory = [...history];
+        newHistory[index] = updatedItem;
+        
+        if (!saveHistory(newHistory)) {
+            return null;
+        }
+        
+        return newHistory;
+    } catch {
+        return null;
+    }
+}
+
+export function deleteHistoryItem(history, id) {
+    try {
+        const newHistory = history.filter(item => item.id !== id);
+        
+        if (!saveHistory(newHistory)) {
+            return null;
+        }
+        
+        return newHistory;
+    } catch {
+        return null;
+    }
+}
