@@ -176,7 +176,7 @@ export function renderBarChart({ container, data, title }) {
  * @param {HTMLElement} params.container - 容器元素
  * @param {Array} params.history - 历史记录
  */
-export function renderActivityHeatmap({ container, history }) {
+export async function renderActivityHeatmap({ container, history }) {
     const { calculateDailyActivity } = await import('../core/stats.js');
     const activity = calculateDailyActivity(history, 7);
 

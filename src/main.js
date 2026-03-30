@@ -635,6 +635,68 @@ async function clearHistory() {
     showToast('历史记录已清空。', 'success');
 }
 
+// ==================== 统计功能 ====================
+
+function openStatsModal() {
+    if (elements.statsModal && elements.statsContainer) {
+        elements.statsModal.classList.add('active');
+        renderFullStatsReport({
+            container: elements.statsContainer,
+            history: state.history,
+            onExportImage: exportStatsImage
+        });
+    }
+}
+
+function closeStatsModal() {
+    if (elements.statsModal) {
+        elements.statsModal.classList.remove('active');
+    }
+}
+
+async function exportStatsImage() {
+    const statsContent = document.getElementById('statsReportContent');
+    if (!statsContent) {
+        showToast('报告内容未加载', 'error');
+        return;
+    }
+
+    try {
+        showToast('正在生成报告图片...', 'info');
+
+        // 检测是否在 file:// 协议下运行
+        const isFileProtocol = window.location.protocol === 'file:';
+        if (isFileProtocol) {
+            showToast('请使用 HTTP 服务器访问以生成图片（如 python -m http.server 8080）', 'error');
+            return;
+        }
+
+        // 等待字体加载完成
+        await document.fonts.ready;
+
+        // 使用 html2canvas 生成图片
+        const canvas = await html2canvas(statsContent, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false
+        });
+
+        // 转换为图片数据并下载
+        const imageData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `心语卡牌报告_${Date.now()}.png`;
+        link.href = imageData;
+        link.click();
+
+        showToast('报告图片已下载', 'success');
+    } catch (error) {
+        console.error('生成报告图片失败:', error);
+        showToast('生成图片失败，请重试', 'error');
+    }
+}
+
 function setActiveFilterButton(container, target) {
     if (!target.classList.contains('filter-btn')) return;
     container.querySelectorAll('.filter-btn').forEach((btn) => btn.classList.remove('active'));
