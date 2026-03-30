@@ -46,9 +46,31 @@
 
         <div class="card-container" id="cardContainer">
             <div class="empty-state" id="emptyState">
-                <p>点击“抽取卡牌”开始对话</p>
+                <p>点击"抽取卡牌"开始对话</p>
                 <p>适合情侣、朋友、家庭与自我探索场景</p>
             </div>
+            <div id="cardContent" style="display: none;">
+                <div class="card-category" id="cardCategory"></div>
+                <div class="card-level" id="cardLevel"></div>
+                <div class="card-question" id="cardQuestion"></div>
+            </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button class="btn" id="drawBtn">抽取卡牌</button>
+            <button class="btn btn-secondary" id="saveBtn" style="display: none;">保存回答</button>
+            <button class="btn btn-secondary" id="shareBtn" style="display: none;">分享</button>
+            <button class="btn btn-secondary" id="statsBtn">📊 数据统计</button>
+        </div>
+
+        <!-- 卡牌包指示器 -->
+        <div id="activePackIndicator"></div>
+
+        <!-- 每日推荐 -->
+        <div class="daily-card-section" id="dailyCardSection">
+            <div id="dailyCardContainer"></div>
+        </div>
             <div id="cardContent" style="display: none;">
                 <div class="card-category" id="cardCategory"></div>
                 <div class="card-level" id="cardLevel"></div>
