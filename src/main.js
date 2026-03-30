@@ -4,6 +4,8 @@ import { loadHistory, saveHistory, clearHistoryStore, updateHistoryItem, deleteH
 import { filterHistory, exportToJSON, downloadJSON } from './core/history-filter.js';
 import { generateHistoryAlbumImage, downloadAlbumImage } from './core/history-export.js';
 import { renderCard, renderHistory, renderHistoryFilters, renderExportControls } from './ui/render.js';
+import { renderFullStatsReport } from './ui/stats-render.js';
+import { checkInOnSave, getStreakDays } from './core/check-in.js';
 
 const state = {
     currentCard: null,
@@ -77,7 +79,12 @@ const elements = {
     shareCardCategory: document.getElementById('shareCardCategory'),
     shareCardQuestion: document.getElementById('shareCardQuestion'),
     shareCardAnswer: document.getElementById('shareCardAnswer'),
-    shareCardAnswerSection: document.getElementById('shareCardAnswerSection')
+    shareCardAnswerSection: document.getElementById('shareCardAnswerSection'),
+    // 统计功能元素
+    statsBtn: document.getElementById('statsBtn'),
+    statsModal: document.getElementById('statsModal'),
+    statsContainer: document.getElementById('statsContainer'),
+    closeStatsBtn: document.getElementById('closeStatsBtn')
 };
 
 // 当前生成的图片数据
@@ -354,7 +361,14 @@ function saveAnswer() {
 
     refreshHistoryView();
     closeSaveModal();
-    showToast('回答已保存。', 'success');
+
+    // 打卡
+    const checkInResult = checkInOnSave();
+    if (checkInResult.isNewCheckIn) {
+        showToast(`打卡成功！已连续打卡 ${checkInResult.data.streak} 天`, 'success');
+    } else {
+        showToast('回答已保存。', 'success');
+    }
 }
 
 function openShareModal() {
@@ -688,6 +702,19 @@ function setupEventListeners() {
     elements.shareModal.addEventListener('click', (event) => {
         if (event.target === elements.shareModal) closeShareModal();
     });
+
+    // 统计功能事件监听
+    if (elements.statsBtn) {
+        elements.statsBtn.addEventListener('click', openStatsModal);
+    }
+    if (elements.closeStatsBtn) {
+        elements.closeStatsBtn.addEventListener('click', closeStatsModal);
+    }
+    if (elements.statsModal) {
+        elements.statsModal.addEventListener('click', (event) => {
+            if (event.target === elements.statsModal) closeStatsModal();
+        });
+    }
 }
 
 function init() {
@@ -711,7 +738,9 @@ function init() {
             container: elements.historyExportContainer,
             onExportJSON: handleExportJSON,
             onExportImage: handleExportImage,
-            onExportAlbum: handleExportAlbum
+            onExportAlbum: handleExportAlbum,
+            onShowStats: openStatsModal,
+            onShowReport: openReportModal
         });
     }
 

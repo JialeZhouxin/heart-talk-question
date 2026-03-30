@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -59,6 +60,7 @@
             <button class="btn" id="drawBtn">抽取卡牌</button>
             <button class="btn btn-secondary" id="saveBtn" style="display: none;">保存回答</button>
             <button class="btn btn-secondary" id="shareBtn" style="display: none;">分享</button>
+            <button class="btn btn-secondary" id="statsBtn">📊 数据统计</button>
         </div>
 
         <div class="history-section">
@@ -129,6 +131,33 @@
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="confirmCancelBtn">取消</button>
                 <button class="btn" id="confirmOkBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="statsModal">
+        <div class="modal-content stats-modal-content">
+            <h3>📊 数据统计</h3>
+            <div id="statsContainer"></div>
+            <button class="btn btn-secondary" id="closeStatsBtn" style="margin-top: 16px; width: 100%;">关闭</button>
+        </div>
+    </div>
+
+    <div class="modal" id="reportModal">
+        <div class="modal-content stats-modal-content">
+            <h3>📋 我的报告</h3>
+            <div class="report-tabs" id="reportTabs">
+                <button class="report-tab active" data-report-type="relationship">
+                    💕 关系成长
+                </button>
+                <button class="report-tab" data-report-type="self-growth">
+                    🌱 自我成长
+                </button>
+            </div>
+            <div id="reportContainer"></div>
+            <div class="share-actions" style="margin-top: 16px;">
+                <button class="btn" id="downloadReportBtn">下载报告图片</button>
+                <button class="btn btn-secondary" id="closeReportBtn">关闭</button>
             </div>
         </div>
     </div>

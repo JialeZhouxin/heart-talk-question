@@ -178,8 +178,10 @@ export function renderHistoryFilters({ container, categoryNames, onFilterChange 
  * @param {Function} params.onExportJSON - 导出JSON回调
  * @param {Function} params.onExportImage - 导出图片回调
  * @param {Function} params.onExportAlbum - 导出纪念册回调
+ * @param {Function} params.onShowStats - 显示统计回调
+ * @param {Function} params.onShowReport - 显示报告回调
  */
-export function renderExportControls({ container, onExportJSON, onExportImage, onExportAlbum }) {
+export function renderExportControls({ container, onExportJSON, onExportImage, onExportAlbum, onShowStats, onShowReport }) {
     container.replaceChildren();
     
     const wrapper = createElement('div', 'export-controls');
@@ -199,9 +201,17 @@ export function renderExportControls({ container, onExportJSON, onExportImage, o
     const albumOption = createElement('div', 'export-option', '📖 生成纪念册');
     albumOption.dataset.exportType = 'album';
     
+    const statsOption = createElement('div', 'export-option', '📊 数据统计');
+    statsOption.dataset.exportType = 'stats';
+    
+    const reportOption = createElement('div', 'export-option', '📋 我的报告');
+    reportOption.dataset.exportType = 'report';
+    
     dropdown.appendChild(jsonOption);
     dropdown.appendChild(imageOption);
     dropdown.appendChild(albumOption);
+    dropdown.appendChild(statsOption);
+    dropdown.appendChild(reportOption);
     
     wrapper.appendChild(exportBtn);
     wrapper.appendChild(dropdown);
@@ -235,6 +245,18 @@ export function renderExportControls({ container, onExportJSON, onExportImage, o
     if (onExportAlbum) {
         albumOption.addEventListener('click', () => {
             onExportAlbum();
+            dropdown.style.display = 'none';
+        });
+    }
+    if (onShowStats) {
+        statsOption.addEventListener('click', () => {
+            onShowStats();
+            dropdown.style.display = 'none';
+        });
+    }
+    if (onShowReport) {
+        reportOption.addEventListener('click', () => {
+            onShowReport();
             dropdown.style.display = 'none';
         });
     }
